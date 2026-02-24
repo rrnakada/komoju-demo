@@ -1,1 +1,759 @@
-no
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>KOMOJU Subscriptions (MVP Demo)</title>
+  <style>
+    :root{
+      --bg:#f3f4f6; --card:#fff; --text:#111827; --muted:#6b7280; --border:#e5e7eb;
+      --border2:#d1d5db; --black:#111; --pill:#fff; --green:#047857; --red:#dc2626;
+      --shadow:0 1px 2px rgba(0,0,0,.06);
+      --r-xl:16px; --r-2xl:20px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--text)}
+    .wrap{max-width:1100px;margin:0 auto;padding:28px 18px}
+    h1{margin:0 0 6px;font-size:28px}
+    .sub{margin:0 0 14px;color:var(--muted);font-size:13px}
+    .pills{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 16px}
+    .pill{border:1px solid var(--border2);background:var(--pill);padding:6px 10px;border-radius:999px;font-size:12px;color:#374151}
+    .topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;
+      border:1px solid var(--border);background:var(--card);padding:10px;border-radius:var(--r-2xl);box-shadow:var(--shadow)}
+    .btn{border:1px solid var(--border2);background:#f3f4f6;padding:9px 12px;border-radius:12px;font-size:13px;cursor:pointer}
+    .btn.primary{background:#111;color:#fff;border-color:#111}
+    .btn.ghost{background:#fff}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .btnlink{border:none;background:none;color:#111;text-decoration:underline;cursor:pointer;font-size:13px;padding:0}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
+    @media (min-width: 980px){ .grid.two{grid-template-columns:1fr 1fr} }
+    .card{border:1px solid var(--border);background:var(--card);padding:18px;border-radius:var(--r-2xl);box-shadow:var(--shadow)}
+    .cardhead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
+    .ctitle{margin:0;font-size:16px}
+    .csub{margin:4px 0 0;color:var(--muted);font-size:13px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .label{font-size:13px;font-weight:600;color:#1f2937}
+    .hint{font-size:12px;color:var(--muted)}
+    input,select{height:40px;border:1px solid var(--border2);border-radius:12px;padding:0 10px;font-size:13px;outline:none;background:#fff}
+    input:focus,select:focus{border-color:#111}
+    .row{display:grid;grid-template-columns:1fr;gap:12px}
+    @media (min-width: 720px){ .row.two{grid-template-columns:1fr 1fr} .row.three{grid-template-columns:2fr 1fr} }
+    .mutebox{border:1px solid var(--border);background:#f9fafb;padding:14px;border-radius:var(--r-2xl)}
+    code{font-family:var(--mono)}
+    .small{font-size:12px;color:var(--muted)}
+    .list{margin:0;padding-left:18px;color:#374151}
+    .list li{margin:8px 0}
+    .product{border:1px solid var(--border);border-radius:14px;padding:12px}
+    .product.selected{border-color:#111}
+    .product-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+    .pname{font-size:14px;font-weight:700;margin:0}
+    .pmeta{font-size:12px;color:var(--muted);margin:6px 0 0}
+    .status{font-size:12px;font-weight:700}
+    .status.on{color:var(--green)} .status.off{color:var(--muted)}
+    .danger{border-color:var(--red);color:var(--red);background:#fff}
+    .danger:hover{background:#fff5f5}
+    .codebox{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+    .code{border:1px solid var(--border);background:#fff;padding:6px 8px;border-radius:10px;font-size:12px}
+    .note{font-size:12px;color:var(--muted);margin-top:10px}
+    .err{font-size:12px;color:var(--red);margin-top:8px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>KOMOJU Subscriptions (MVP Demo)</h1>
+    <p class="sub">Demo-only preview of the MVP experience: Merchant setup → Buyer Hosted Page → Buyer Subscription Portal.</p>
+
+    <div class="pills">
+      <span class="pill">Card recurring only</span>
+      <span class="pill">Preset trial: None/7/14/30</span>
+      <span class="pill">Cancel at period end</span>
+      <span class="pill">Update payment method</span>
+    </div>
+
+    <div class="topbar">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button id="modeBuyer" class="btn primary">Buyer View</button>
+        <button id="modeMerchant" class="btn">Merchant View</button>
+      </div>
+
+      <div id="buyerTabs" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button id="tabHosted" class="btn ghost" style="border-color:#111">Hosted Page</button>
+        <button id="tabPortal" class="btn ghost">Subscription Portal</button>
+      </div>
+
+      <div id="merchantHint" class="small" style="display:none">
+        Create plans + set Active/Inactive + copy Hosted Page link
+      </div>
+    </div>
+
+    <div id="app"></div>
+  </div>
+
+<script>
+(() => {
+  // ---------------------------
+  // State (in-memory)
+  // ---------------------------
+  let mode = "buyer";      // buyer | merchant
+  let buyerPage = "hosted";// hosted | portal
+
+  let products = [
+    { id:"p1", name:"Premium Plan", priceYen:1000, frequency:"monthly", trialDays:7, active:true }
+  ];
+
+  let merchantForm = { name:"", priceYen:"", frequency:"monthly", trialDays:"0" };
+  let selectedProductId = "p1";
+
+  let card = { number:"", expiry:"", cvc:"" };
+  let subscription = null; // { productId, status, nextBillingISO, cancelAtPeriodEnd, last4 }
+
+  // ---------------------------
+  // Helpers
+  // ---------------------------
+  const $ = (sel) => document.querySelector(sel);
+  const app = $("#app");
+
+  const fmtYen = (n) => `¥${Number(n||0).toLocaleString("ja-JP")}`;
+
+  const formatDate = (iso) =>
+    new Date(iso).toLocaleDateString("en-US", { year:"numeric", month:"short", day:"numeric" });
+
+  const addDays = (d, days) => { const out = new Date(d); out.setDate(out.getDate()+days); return out; };
+  const addMonths = (d, months) => { const out = new Date(d); out.setMonth(out.getMonth()+months); return out; };
+  const addYears = (d, years) => { const out = new Date(d); out.setFullYear(out.getFullYear()+years); return out; };
+
+  const computeNextBillingISO = (trialDays, frequency) => {
+    const now = new Date();
+    if (trialDays && trialDays > 0) return addDays(now, trialDays).toISOString();
+    return (frequency === "yearly" ? addYears(now, 1) : addMonths(now, 1)).toISOString();
+  };
+
+  const digitsOnly = (s) => (s||"").split("").filter(ch => ch >= "0" && ch <= "9").join("");
+  const stripSpaces = (s) => (s||"").split(" ").join("");
+
+  const getSelectedProduct = () => products.find(p => p.id === selectedProductId) || null;
+  const getActiveProducts = () => products.filter(p => p.active);
+
+  const hostedUrl = (pid) => `https://hosted.komoju.com/subscribe/${pid}`;
+
+  // IME-safe input binding:
+  function bindImeSafeInput(inputEl, getValue, setValue, postRenderUpdate){
+    inputEl.value = getValue();
+    let composing = false;
+
+    inputEl.addEventListener("compositionstart", () => { composing = true; });
+    inputEl.addEventListener("compositionend", (e) => {
+      composing = false;
+      setValue(e.target.value);
+      postRenderUpdate();
+    });
+    inputEl.addEventListener("input", (e) => {
+      if (!composing) {
+        setValue(e.target.value);
+        postRenderUpdate();
+      }
+    });
+  }
+
+  // ---------------------------
+  // Rendering
+  // ---------------------------
+  function render() {
+    // Tabs visibility
+    $("#buyerTabs").style.display = mode === "buyer" ? "flex" : "none";
+    $("#merchantHint").style.display = mode === "merchant" ? "block" : "none";
+
+    // Mode buttons
+    $("#modeBuyer").className = "btn" + (mode === "buyer" ? " primary" : "");
+    $("#modeMerchant").className = "btn" + (mode === "merchant" ? " primary" : "");
+
+    // Buyer tabs
+    $("#tabHosted").style.borderColor = (buyerPage === "hosted") ? "#111" : "#e5e7eb";
+    $("#tabPortal").style.borderColor = (buyerPage === "portal") ? "#111" : "#e5e7eb";
+
+    app.innerHTML = "";
+    if (mode === "merchant") renderMerchant();
+    else if (buyerPage === "hosted") renderBuyerHosted();
+    else renderBuyerPortal();
+  }
+
+  // ---------------------------
+  // Merchant View
+  // ---------------------------
+  function renderMerchant() {
+    const selected = getSelectedProduct();
+
+    const grid = document.createElement("div");
+    grid.className = "grid two";
+    app.appendChild(grid);
+
+    // Create product card
+    const c1 = cardEl("Create subscription product", "MVP: name, price, monthly/yearly, preset trial, card-only", "Card only");
+    const form = document.createElement("div");
+    form.className = "row two";
+    c1.body.appendChild(form);
+
+    // Fields
+    form.appendChild(fieldEl("Product name", null, (wrap) => {
+      const inp = document.createElement("input");
+      inp.placeholder = "e.g., Premium Membership";
+      bindImeSafeInput(inp, () => merchantForm.name, (v) => merchantForm.name = v, () => {});
+      wrap.appendChild(inp);
+    }));
+
+    form.appendChild(fieldEl("Price (JPY)", null, (wrap) => {
+      const inp = document.createElement("input");
+      inp.placeholder = "1000";
+      bindImeSafeInput(inp, () => merchantForm.priceYen, (v) => merchantForm.priceYen = digitsOnly(v), () => { inp.value = merchantForm.priceYen; });
+      wrap.appendChild(inp);
+    }));
+
+    form.appendChild(fieldEl("Billing frequency", null, (wrap) => {
+      const sel = document.createElement("select");
+      sel.innerHTML = `
+        <option value="monthly">Monthly</option>
+        <option value="yearly">Yearly</option>
+      `;
+      sel.value = merchantForm.frequency;
+      sel.addEventListener("change", (e) => { merchantForm.frequency = e.target.value; });
+      wrap.appendChild(sel);
+    }));
+
+    form.appendChild(fieldEl("Trial period (preset)", null, (wrap) => {
+      const sel = document.createElement("select");
+      sel.innerHTML = `
+        <option value="0">None</option>
+        <option value="7">7 days</option>
+        <option value="14">14 days</option>
+        <option value="30">30 days</option>
+      `;
+      sel.value = merchantForm.trialDays;
+      sel.addEventListener("change", (e) => { merchantForm.trialDays = e.target.value; });
+      wrap.appendChild(sel);
+    }));
+
+    // Footer
+    const footer = document.createElement("div");
+    footer.style.marginTop = "14px";
+    footer.style.display = "flex";
+    footer.style.alignItems = "center";
+    footer.style.justifyContent = "space-between";
+    footer.style.gap = "12px";
+    footer.innerHTML = `<div class="small">Creating a product auto-generates a Hosted Page link.</div>`;
+    const btn = document.createElement("button");
+    btn.className = "btn primary";
+    btn.textContent = "Create & Activate";
+    btn.disabled = !(merchantForm.name.trim() && Number(merchantForm.priceYen));
+    btn.addEventListener("click", () => {
+      const name = merchantForm.name.trim();
+      const price = Number(merchantForm.priceYen);
+      const trialDays = Number(merchantForm.trialDays);
+      if (!name || !price || price <= 0) return;
+
+      const id = `p${products.length + 1}`;
+      products = [{ id, name, priceYen: price, frequency: merchantForm.frequency, trialDays, active:true }, ...products];
+      selectedProductId = id;
+      merchantForm = { name:"", priceYen:"", frequency:"monthly", trialDays:"0" };
+      render();
+    });
+    footer.appendChild(btn);
+    c1.body.appendChild(footer);
+
+    grid.appendChild(c1.root);
+
+    // Products card
+    const c2 = cardEl("Products", "Set Active/Inactive + copy Hosted Page link");
+    const list = document.createElement("div");
+    list.style.display = "flex";
+    list.style.flexDirection = "column";
+    list.style.gap = "10px";
+
+    products.forEach(p => {
+      const item = document.createElement("div");
+      item.className = "product" + (p.id === selectedProductId ? " selected" : "");
+
+      const top = document.createElement("div");
+      top.className = "product-top";
+
+      const leftBtn = document.createElement("button");
+      leftBtn.style.border = "none";
+      leftBtn.style.background = "none";
+      leftBtn.style.padding = "0";
+      leftBtn.style.textAlign = "left";
+      leftBtn.style.cursor = "pointer";
+      leftBtn.title = "Open buyer hosted page for this product";
+      leftBtn.innerHTML = `
+        <p class="pname">${escapeHtml(p.name)}</p>
+        <p class="pmeta">${fmtYen(p.priceYen)} / ${p.frequency === "yearly" ? "year" : "month"}${p.trialDays ? ` • ${p.trialDays}-day trial` : ""}</p>
+      `;
+      leftBtn.addEventListener("click", () => {
+        selectedProductId = p.id;
+        mode = "buyer";
+        buyerPage = "hosted";
+        render();
+      });
+
+      const right = document.createElement("div");
+      right.style.display = "flex";
+      right.style.alignItems = "center";
+      right.style.gap = "8px";
+      right.innerHTML = `<span class="status ${p.active ? "on" : "off"}">${p.active ? "Active" : "Inactive"}</span>`;
+
+      const toggle = document.createElement("button");
+      toggle.className = "btn";
+      toggle.textContent = p.active ? "Deactivate" : "Activate";
+      toggle.addEventListener("click", () => {
+        products = products.map(x => x.id === p.id ? { ...x, active: !x.active } : x);
+        render();
+      });
+      right.appendChild(toggle);
+
+      top.appendChild(leftBtn);
+      top.appendChild(right);
+      item.appendChild(top);
+
+      if (p.id === selectedProductId) {
+        const box = document.createElement("div");
+        box.className = "mutebox";
+        box.style.marginTop = "10px";
+        box.innerHTML = `
+          <div class="small">Hosted Page link</div>
+          <div class="codebox">
+            <span class="code"><code>${escapeHtml(hostedUrl(p.id))}</code></span>
+            <button class="btnlink" data-copy="${escapeHtml(hostedUrl(p.id))}">Copy</button>
+            <span class="small">• Click product name to open Buyer view</span>
+          </div>
+        `;
+        box.querySelector("[data-copy]").addEventListener("click", async (e) => {
+          try {
+            await navigator.clipboard.writeText(e.target.getAttribute("data-copy"));
+            e.target.textContent = "Copied!";
+            setTimeout(()=> e.target.textContent = "Copy", 900);
+          } catch {
+            alert("Copy failed — your browser may block clipboard access.");
+          }
+        });
+        item.appendChild(box);
+      }
+
+      list.appendChild(item);
+    });
+
+    c2.body.appendChild(list);
+    const note = document.createElement("div");
+    note.className = "note";
+    note.textContent = "MVP intentionally excludes custom billing rules, coupons, proration, and plan switching.";
+    c2.body.appendChild(note);
+
+    grid.appendChild(c2.root);
+
+    // Demo helper full width
+    const helper = cardEl("Demo helper", "Jump to buyer hosted page with selected product");
+    const row = document.createElement("div");
+    row.className = "row two";
+
+    row.appendChild(fieldEl("Selected product", null, (wrap) => {
+      const sel = document.createElement("select");
+      sel.innerHTML = products.map(p => `<option value="${p.id}">${escapeHtml(p.name)} (${p.active ? "Active" : "Inactive"})</option>`).join("");
+      sel.value = selectedProductId;
+      sel.addEventListener("change", (e) => { selectedProductId = e.target.value; render(); });
+      wrap.appendChild(sel);
+    }));
+
+    row.appendChild(fieldEl("Hosted Page URL", null, (wrap) => {
+      const box = document.createElement("div");
+      box.className = "mutebox";
+      box.style.height = "40px";
+      box.style.display = "flex";
+      box.style.alignItems = "center";
+      box.style.padding = "0 10px";
+      box.style.borderRadius = "12px";
+      box.style.overflow = "hidden";
+      box.style.whiteSpace = "nowrap";
+      box.textContent = selected ? hostedUrl(selected.id) : "";
+      wrap.appendChild(box);
+    }));
+
+    helper.body.appendChild(row);
+    helper.root.style.gridColumn = "1 / -1";
+    const below = document.createElement("div");
+    below.style.marginTop = "10px";
+    helper.body.appendChild(below);
+
+    app.appendChild(helper.root);
+  }
+
+  // ---------------------------
+  // Buyer Hosted Page
+  // ---------------------------
+  function renderBuyerHosted() {
+    const plan = getSelectedProduct();
+    const planActive = plan?.active;
+
+    const grid = document.createElement("div");
+    grid.className = "grid two";
+    app.appendChild(grid);
+
+    const c1 = cardEl("Hosted Page", "Buyer subscribes to a plan and inputs card details", planActive ? "Plan Active" : "Plan Inactive");
+
+    // Plan selector
+    c1.body.appendChild(fieldEl("Plan", null, (wrap) => {
+      const sel = document.createElement("select");
+      const active = getActiveProducts();
+      sel.innerHTML = (active.length ? active : [{id:"", name:"No active plans"}])
+        .map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
+      sel.value = selectedProductId;
+      sel.addEventListener("change", (e) => { selectedProductId = e.target.value; render(); });
+      wrap.appendChild(sel);
+    }));
+
+    // Plan box
+    const planBox = document.createElement("div");
+    planBox.className = "mutebox";
+    planBox.style.marginTop = "14px";
+
+    if (plan) {
+      const firstChargeISO = computeNextBillingISO(plan.trialDays, plan.frequency);
+      const nextChargeISO = computeNextBillingISO(0, plan.frequency);
+      planBox.innerHTML = `
+        <div style="font-size:18px;font-weight:800">${escapeHtml(plan.name)}</div>
+        <div style="margin-top:6px;font-size:14px;color:#374151">${fmtYen(plan.priceYen)} / ${plan.frequency === "yearly" ? "year" : "month"}</div>
+        <div class="small" style="margin-top:8px">
+          ${
+            plan.trialDays
+              ? `Trial: ${plan.trialDays} days • First charge on ${escapeHtml(formatDate(firstChargeISO))}`
+              : `Renews automatically • Next charge on ${escapeHtml(formatDate(nextChargeISO))}`
+          }
+        </div>
+      `;
+    } else {
+      planBox.textContent = "No plan selected.";
+    }
+    c1.body.appendChild(planBox);
+
+    // Card inputs
+    const form = document.createElement("div");
+    form.style.marginTop = "16px";
+    form.style.display = "flex";
+    form.style.flexDirection = "column";
+    form.style.gap = "12px";
+
+    const cardNumWrap = fieldEl("Card number", "Demo input only", (wrap) => {
+      const inp = document.createElement("input");
+      inp.placeholder = "4242 4242 4242 4242";
+      bindImeSafeInput(inp, () => card.number, (v) => { card.number = v; }, () => {});
+      wrap.appendChild(inp);
+    });
+    form.appendChild(cardNumWrap);
+
+    const row2 = document.createElement("div");
+    row2.className = "row two";
+    row2.appendChild(fieldEl("Expiry", null, (wrap) => {
+      const inp = document.createElement("input");
+      inp.placeholder = "MM/YY";
+      bindImeSafeInput(inp, () => card.expiry, (v) => { card.expiry = v; }, () => {});
+      wrap.appendChild(inp);
+    }));
+    row2.appendChild(fieldEl("CVC", null, (wrap) => {
+      const inp = document.createElement("input");
+      inp.placeholder = "123";
+      bindImeSafeInput(inp, () => card.cvc, (v) => { card.cvc = v; }, () => {});
+      wrap.appendChild(inp);
+    }));
+    form.appendChild(row2);
+
+    const legal = document.createElement("div");
+    legal.className = "small";
+    legal.style.marginTop = "2px";
+    legal.textContent = "By confirming, you authorize recurring charges. You can cancel anytime (effective end of current period).";
+    form.appendChild(legal);
+
+    // Buttons
+    const actions = document.createElement("div");
+    actions.style.display = "flex";
+    actions.style.flexWrap = "wrap";
+    actions.style.gap = "10px";
+    actions.style.alignItems = "center";
+    actions.style.marginTop = "6px";
+
+    const cardDigits = stripSpaces(card.number);
+    const canSubscribe = !!plan && !!planActive && cardDigits.length >= 12 && card.expiry.length >= 4 && card.cvc.length >= 3;
+
+    const subBtn = document.createElement("button");
+    subBtn.className = "btn primary";
+    subBtn.textContent = plan?.trialDays ? "Start trial" : "Subscribe";
+    subBtn.disabled = !canSubscribe;
+    subBtn.addEventListener("click", () => {
+      if (!plan) return;
+      const last4 = (stripSpaces(card.number) || "0000").slice(-4);
+      const nextISO = computeNextBillingISO(plan.trialDays, plan.frequency);
+      subscription = { productId: plan.id, status: plan.trialDays ? "trialing" : "active", nextBillingISO: nextISO, cancelAtPeriodEnd:false, last4 };
+      buyerPage = "portal";
+      render();
+    });
+
+    const portalBtn = document.createElement("button");
+    portalBtn.className = "btnlink";
+    portalBtn.textContent = "Go to subscription portal";
+    portalBtn.addEventListener("click", () => { buyerPage = "portal"; render(); });
+
+    actions.appendChild(subBtn);
+    actions.appendChild(portalBtn);
+    form.appendChild(actions);
+
+    if (plan && !planActive) {
+      const err = document.createElement("div");
+      err.className = "err";
+      err.textContent = "This plan is inactive. Please contact the merchant.";
+      form.appendChild(err);
+    }
+
+    c1.body.appendChild(form);
+    grid.appendChild(c1.root);
+
+    // Behind the scenes
+    const c2 = cardEl("Behind the scenes", "(Narration helper)");
+    const ul = document.createElement("ul");
+    ul.className = "list";
+    ul.innerHTML = `
+      <li>Tokenize card and store payment method token</li>
+      <li>Create/lookup Customer</li>
+      <li>Create Subscription (trialing or active)</li>
+      <li>Create invoice + charge now (or schedule at trial end)</li>
+      <li>Renewal: charge token, retry on failure (fixed policy)</li>
+    `;
+    c2.body.appendChild(ul);
+    grid.appendChild(c2.root);
+  }
+
+  // ---------------------------
+  // Buyer Portal
+  // ---------------------------
+  function renderBuyerPortal() {
+    const grid = document.createElement("div");
+    grid.className = "grid two";
+    app.appendChild(grid);
+
+    const sub = subscription;
+    const plan = sub ? products.find(p => p.id === sub.productId) : null;
+
+    const c1 = cardEl("Subscription Portal", "Update payment method or cancel", sub ? sub.status.toUpperCase() : "NO SUBSCRIPTION");
+
+    if (!sub || !plan) {
+      const box = document.createElement("div");
+      box.className = "mutebox";
+      box.innerHTML = `No subscription in this demo session. Go to Hosted Page to subscribe.`;
+      const go = document.createElement("div");
+      go.style.marginTop = "12px";
+      const btn = document.createElement("button");
+      btn.className = "btn primary";
+      btn.textContent = "Go to Hosted Page";
+      btn.addEventListener("click", () => { buyerPage = "hosted"; render(); });
+      go.appendChild(btn);
+      box.appendChild(go);
+      c1.body.appendChild(box);
+      grid.appendChild(c1.root);
+    } else {
+      // Summary
+      const box = document.createElement("div");
+      box.className = "mutebox";
+      box.innerHTML = `
+        <div style="font-size:14px;font-weight:800">${escapeHtml(plan.name)}</div>
+        <div style="margin-top:6px;font-size:14px;color:#374151">${fmtYen(plan.priceYen)} / ${plan.frequency === "yearly" ? "year" : "month"}</div>
+        <div class="small" style="margin-top:8px">Next billing date: ${escapeHtml(formatDate(sub.nextBillingISO))}</div>
+        ${sub.cancelAtPeriodEnd ? `<div class="small" style="margin-top:8px;color:#b91c1c">Cancellation scheduled (ends after current period).</div>` : ``}
+      `;
+      c1.body.appendChild(box);
+
+      // Payment method
+      const pm = document.createElement("div");
+      pm.className = "mutebox";
+      pm.style.background = "#fff";
+      pm.style.marginTop = "12px";
+      pm.innerHTML = `
+        <div style="font-size:14px;font-weight:800">Payment method</div>
+        <div style="margin-top:6px;font-size:14px;color:#374151">•••• ${escapeHtml(sub.last4)}</div>
+      `;
+
+      const row = document.createElement("div");
+      row.className = "row three";
+      row.style.marginTop = "10px";
+
+      const inputWrap = document.createElement("div");
+      const inp = document.createElement("input");
+      inp.placeholder = "New card number";
+      bindImeSafeInput(inp, () => card.number, (v) => { card.number = v; }, () => {});
+      inputWrap.appendChild(inp);
+
+      const hint = document.createElement("div");
+      hint.className = "small";
+      hint.style.marginTop = "6px";
+      hint.textContent = "Demo: stores last 4 digits only.";
+      inputWrap.appendChild(hint);
+
+      const btn = document.createElement("button");
+      btn.className = "btn primary";
+      btn.textContent = "Update";
+      btn.disabled = !card.number.trim();
+      btn.addEventListener("click", () => {
+        const last4 = (stripSpaces(card.number) || "0000").slice(-4);
+        subscription = { ...subscription, last4 };
+        render();
+      });
+
+      row.appendChild(inputWrap);
+      row.appendChild(btn);
+      pm.appendChild(row);
+      c1.body.appendChild(pm);
+
+      // Manage
+      const mg = document.createElement("div");
+      mg.className = "mutebox";
+      mg.style.background = "#fff";
+      mg.style.marginTop = "12px";
+      mg.innerHTML = `<div style="font-size:14px;font-weight:800">Manage</div>`;
+
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.flexWrap = "wrap";
+      actions.style.gap = "10px";
+      actions.style.marginTop = "10px";
+
+      if (!sub.cancelAtPeriodEnd) {
+        const cancel = document.createElement("button");
+        cancel.className = "btn danger";
+        cancel.textContent = "Cancel subscription";
+        cancel.addEventListener("click", () => {
+          subscription = { ...subscription, cancelAtPeriodEnd: true };
+          render();
+        });
+        actions.appendChild(cancel);
+      } else {
+        const keep = document.createElement("button");
+        keep.className = "btn primary";
+        keep.textContent = "Keep subscription";
+        keep.addEventListener("click", () => {
+          subscription = { ...subscription, cancelAtPeriodEnd: false };
+          render();
+        });
+        actions.appendChild(keep);
+      }
+
+      const clear = document.createElement("button");
+      clear.className = "btnlink";
+      clear.textContent = "Clear demo subscription";
+      clear.addEventListener("click", () => { subscription = null; render(); });
+
+      actions.appendChild(clear);
+      mg.appendChild(actions);
+
+      const behavior = document.createElement("div");
+      behavior.className = "small";
+      behavior.style.marginTop = "10px";
+      behavior.textContent = "MVP behavior: cancel_at_period_end = true";
+      mg.appendChild(behavior);
+
+      c1.body.appendChild(mg);
+
+      grid.appendChild(c1.root);
+    }
+
+    // Merchant view of buyer (demo)
+    const c2 = cardEl("Merchant view of this buyer", "(For demo only)");
+    const demoBox = document.createElement("div");
+    demoBox.className = "mutebox";
+    demoBox.innerHTML = (sub && plan)
+      ? `
+        Plan: <b>${escapeHtml(plan.name)}</b><br/>
+        Status: <b>${escapeHtml(sub.status)}</b><br/>
+        Next billing: <b>${escapeHtml(formatDate(sub.nextBillingISO))}</b><br/>
+        Payment method: <b>•••• ${escapeHtml(sub.last4)}</b><br/>
+        Cancel at period end: <b>${sub.cancelAtPeriodEnd ? "Yes" : "No"}</b>
+      `
+      : `No subscription created yet.`;
+    c2.body.appendChild(demoBox);
+
+    const note = document.createElement("div");
+    note.className = "note";
+    note.textContent = "Phase 2+ would add subscriber list exports, webhooks, and dunning configuration.";
+    c2.body.appendChild(note);
+
+    grid.appendChild(c2.root);
+  }
+
+  // ---------------------------
+  // UI components (DOM helpers)
+  // ---------------------------
+  function cardEl(title, subtitle, rightPillText) {
+    const root = document.createElement("div");
+    root.className = "card";
+
+    const head = document.createElement("div");
+    head.className = "cardhead";
+
+    const left = document.createElement("div");
+    left.innerHTML = `
+      <h2 class="ctitle">${escapeHtml(title)}</h2>
+      ${subtitle ? `<p class="csub">${escapeHtml(subtitle)}</p>` : ``}
+    `;
+
+    head.appendChild(left);
+
+    if (rightPillText) {
+      const right = document.createElement("div");
+      right.className = "pill";
+      right.textContent = rightPillText;
+      head.appendChild(right);
+    }
+
+    const body = document.createElement("div");
+
+    root.appendChild(head);
+    root.appendChild(body);
+
+    return { root, body };
+  }
+
+  function fieldEl(label, hint, renderControl) {
+    const wrap = document.createElement("div");
+    wrap.className = "field";
+    const l = document.createElement("div");
+    l.className = "label";
+    l.textContent = label;
+    wrap.appendChild(l);
+    if (hint) {
+      const h = document.createElement("div");
+      h.className = "hint";
+      h.textContent = hint;
+      wrap.appendChild(h);
+    }
+    renderControl(wrap);
+    return wrap;
+  }
+
+  function escapeHtml(s){
+    return (s ?? "").toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll("\"","&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // ---------------------------
+  // Nav wiring
+  // ---------------------------
+  $("#modeBuyer").addEventListener("click", () => { mode = "buyer"; buyerPage = "hosted"; render(); });
+  $("#modeMerchant").addEventListener("click", () => { mode = "merchant"; render(); });
+
+  $("#tabHosted").addEventListener("click", () => { buyerPage = "hosted"; render(); });
+  $("#tabPortal").addEventListener("click", () => { buyerPage = "portal"; render(); });
+
+  // Initial render
+  render();
+})();
+</script>
+</body>
+</html>
