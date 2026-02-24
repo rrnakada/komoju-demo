@@ -512,19 +512,6 @@
     c1.body.appendChild(form);
     grid.appendChild(c1.root);
 
-    // Behind the scenes
-    const c2 = cardEl("Behind the scenes", "(Narration helper)");
-    const ul = document.createElement("ul");
-    ul.className = "list";
-    ul.innerHTML = `
-      <li>Tokenize card and store payment method token</li>
-      <li>Create/lookup Customer</li>
-      <li>Create Subscription (trialing or active)</li>
-      <li>Create invoice + charge now (or schedule at trial end)</li>
-      <li>Renewal: charge token, retry on failure (fixed policy)</li>
-    `;
-    c2.body.appendChild(ul);
-    grid.appendChild(c2.root);
   }
 
   // ---------------------------
@@ -620,25 +607,15 @@
       actions.style.gap = "10px";
       actions.style.marginTop = "10px";
 
-      if (!sub.cancelAtPeriodEnd) {
-        const cancel = document.createElement("button");
-        cancel.className = "btn danger";
-        cancel.textContent = "Cancel subscription";
-        cancel.addEventListener("click", () => {
-          subscription = { ...subscription, cancelAtPeriodEnd: true };
-          render();
-        });
-        actions.appendChild(cancel);
-      } else {
-        const keep = document.createElement("button");
-        keep.className = "btn primary";
-        keep.textContent = "Keep subscription";
-        keep.addEventListener("click", () => {
-          subscription = { ...subscription, cancelAtPeriodEnd: false };
-          render();
-        });
-        actions.appendChild(keep);
-      }
+      const cancel = document.createElement("button");
+      cancel.className = "btn danger";
+      cancel.textContent = "Cancel subscription";
+      cancel.addEventListener("click", () => {
+        subscription = null;          // simplest “frontend-only” cancel
+        buyerPage = "hosted";         // optional: bounce back to hosted page
+        render();
+      });
+      actions.appendChild(cancel);
 
       const clear = document.createElement("button");
       clear.className = "btnlink";
@@ -651,7 +628,6 @@
       const behavior = document.createElement("div");
       behavior.className = "small";
       behavior.style.marginTop = "10px";
-      behavior.textContent = "MVP behavior: cancel_at_period_end = true";
       mg.appendChild(behavior);
 
       c1.body.appendChild(mg);
@@ -669,7 +645,6 @@
         Status: <b>${escapeHtml(sub.status)}</b><br/>
         Next billing: <b>${escapeHtml(formatDate(sub.nextBillingISO))}</b><br/>
         Payment method: <b>•••• ${escapeHtml(sub.last4)}</b><br/>
-        Cancel at period end: <b>${sub.cancelAtPeriodEnd ? "Yes" : "No"}</b>
       `
       : `No subscription created yet.`;
     c2.body.appendChild(demoBox);
