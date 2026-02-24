@@ -68,7 +68,6 @@
     <div class="pills">
       <span class="pill">Card recurring only</span>
       <span class="pill">Preset trial: None/7/14/30</span>
-      <span class="pill">Cancel at period end</span>
       <span class="pill">Update payment method</span>
     </div>
 
@@ -107,7 +106,7 @@
   let selectedProductId = "p1";
 
   let card = { number:"", expiry:"", cvc:"" };
-  let subscription = null; // { productId, status, nextBillingISO, cancelAtPeriodEnd, last4 }
+  let subscription = null; // { productId, status, nextBillingISO, last4 }
 
   // ---------------------------
   // Helpers
